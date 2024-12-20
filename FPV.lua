@@ -1,1 +1,0 @@
-D:/EdgeTX/SCRIPTS/TOOLS/test.lua

@@ -2,9 +2,14 @@ local inputs = { throttle = 0, yaw = 0, pitch = 0, roll = 0 }
 
 local camera = { X = 0, Y = 10, Z = 0, RX = 0, RY = 0, RZ = 0 }
 
+local velocity = { X = 0, Y = 0, Z = 0 }
+
 local objs = {
   { X = 0, Y = -10001, Z = 0, R = 10000},
-  { X = 0, Y = 10, Z = 20, R = 5}
+  { X = 0, Y = 10, Z = 20, R = 5},
+  { X = 0, Y = 10, Z = -20, R = 5},
+  { X = 20, Y = 10, Z = 0, R = 5},
+  { X = -20, Y = 10, Z = 0, R = 5},
 }
 
 local lights = { { X = 0, Y = 10, Z = 10, P = 1000} }
@@ -17,8 +22,14 @@ gravity = 1
 pitch = 0.5
 roll = 0.5
 rudder = 0.5
+drag = 0.001
 
 local function init()
+end
+
+local function rnd(val)
+  seed = math.fmod((seed * 13264534 + 5364532), 13532)
+  return math.fmod(seed, val)
 end
 
 local function drawBig(x, y, v)
@@ -31,10 +42,10 @@ local function drawBig(x, y, v)
 
     local retries = 100
 
-    math.randomseed((x * 56453432 + y * 13264534) % 13532 + 5364532)
+    seed = math.fmod((x * 56453432 + y * 13264534 + 5364532), 13532)
     while inpoints and retries > 0 do
       inpoints = false
-      point = { X = x * 3 + math.random(0, 2), Y = y * 3 + math.random(0, 2) }
+      point = { X = x * 3 + rnd(3), Y = y * 3 + rnd(3) }
 
       for i = 1, addedpoints do
         local v = points[i]
@@ -166,19 +177,42 @@ local function run(event, touchState)
     end
   end
 
-  camera.Y = inputs.throttle * 100
-
   camera.RX = math.fmod(camera.RX + inputs.pitch * pitch, 2 * math.pi)
   camera.RY = math.fmod(camera.RY + inputs.yaw * rudder, 2 * math.pi)
   camera.RZ = math.fmod(camera.RZ - inputs.roll * roll, 2 * math.pi)
 
+  local direction = rotateX(0, 1, 0, camera.RX)
+  direction = rotateY(direction.X, direction.Y, direction.Z, camera.RY)
+  direction = rotateZ(direction.X, direction.Y, direction.Z, camera.RZ)
+
+  velocity.X = velocity.X + direction.X * inputs.throttle * throttle
+  velocity.Y = velocity.Y + direction.Y * inputs.throttle * throttle
+  velocity.Z = velocity.Z + direction.Z * inputs.throttle * throttle
+
+  velocity.Y = velocity.Y - gravity
+
+  camera.X = camera.X + velocity.X
+  camera.Y = camera.Y + velocity.Y
+  camera.Z = camera.Z + velocity.Z
+
+  if camera.Y < 0 then
+    velocity.Y = 0
+    camera.Y = 0
+  end
+
+  local dragVal = velocity.X * velocity.X + velocity.Y * velocity.Y + velocity.Z * velocity.Z
+
+  velocity.X = velocity.X - velocity.X * dragVal * drag
+  velocity.Y = velocity.Y - velocity.Y * dragVal * drag
+  velocity.Z = velocity.Z - velocity.Z * dragVal * drag
+
   for x = 0, LCD_W / 3 - 1 do
     for y = 0, LCD_H / 3 - 1 do
-      local baseDirectionX = (x - LCD_W / 6) * fovx
-      local baseDirectionY = (LCD_H / 6 - y) * fovy
-      local baseDirectionZ = 10
+      direction.X = (x - LCD_W / 6) * fovx
+      direction.Y = (LCD_H / 6 - y) * fovy
+      direction.Z = 10
 
-      local direction = rotateX(baseDirectionX, baseDirectionY, baseDirectionZ, camera.RX)
+      direction = rotateX(direction.X, direction.Y, direction.Z, camera.RX)
       direction = rotateY(direction.X, direction.Y, direction.Z, camera.RY)
       direction = rotateZ(direction.X, direction.Y, direction.Z, camera.RZ)
 

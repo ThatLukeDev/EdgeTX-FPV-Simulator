@@ -1,5 +1,7 @@
 local inputs = { throttle = 0, yaw = 0, pitch = 0, roll = 0 }
 
+local camera = { X = 0, Y = 0, Z = 0, RX = 0, RY = 0, RZ = 0 }
+
 local function init()
 end
 
@@ -7,7 +9,7 @@ local function drawBig(x, y, v)
   local points = { {X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0} }
   local addedpoints = 0
 
-  for i = 1, math.floor(v * 4) do
+  for i = 1, math.floor(v * 5) do
     local point = nil
     local inpoints = true
 
@@ -50,16 +52,11 @@ local function run(event, touchState)
     end
   end
 
-  for x = 4, LCD_W / 2 - 1 do
+  for x = 0, LCD_W / 2 - 1 do
     for y = 0, LCD_H / 2 - 1 do
-      drawBig(x, y, x / LCD_W * 2.5)
+      drawBig(x, y, x / LCD_W * 2)
     end
   end
-
-  lcd.drawText(0, 00, inputs.throttle)
-  lcd.drawText(0, 10, inputs.yaw)
-  lcd.drawText(0, 20, inputs.pitch)
-  lcd.drawText(0, 30, inputs.roll)
 
   return 0
 end

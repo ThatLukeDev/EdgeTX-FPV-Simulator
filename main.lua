@@ -2,7 +2,10 @@ local inputs = { throttle = 0, yaw = 0, pitch = 0, roll = 0 }
 
 local camera = { X = 0, Y = 10, Z = 0, RX = 0, RY = 0, RZ = 0 }
 
-local objs = { { X = 0, Y = -101, Z = 0, R = 100} }
+local objs = {
+  { X = 0, Y = -101, Z = 0, R = 100},
+  { X = 0, Y = 10, Z = 20, R = 5}
+}
 
 local lights = { { X = 0, Y = 10, Z = 10, P = 100000000000} }
 
@@ -111,6 +114,39 @@ local function trace(originX, originY, originZ, directionX, directionY, directio
   return 0
 end
 
+local function rotateX(x, y, z, theta)
+  local sin = math.sin(theta)
+  local cos = math.cos(theta)
+
+  return {
+    X = x,
+    Y = cos * y - sin * z,
+    Z = sin * y + cos * z
+  }
+end
+
+local function rotateY(x, y, z, theta)
+  local sin = math.sin(theta)
+  local cos = math.cos(theta)
+
+  return {
+    X = cos * x + sin * z,
+    Y = y,
+    Z = -sin * x + cos * z
+  }
+end
+
+local function rotateZ(x, y, z, theta)
+  local sin = math.sin(theta)
+  local cos = math.cos(theta)
+
+  return {
+    X = cos * x - sin * y,
+    Y = sin * x + cos * y,
+    Z = z
+  }
+end
+
 local function run(event, touchState)
   inputs.throttle = (tonumber(getValue('thr')) + 1024) / 2048
   inputs.yaw = tonumber(getValue('rud')) / 1024
@@ -126,13 +162,21 @@ local function run(event, touchState)
 
   camera.Y = inputs.throttle * 100
 
+  local rotX = inputs.pitch
+  local rotY = inputs.yaw
+  local rotZ = -inputs.roll
+
   for x = 0, LCD_W / 2 - 1 do
     for y = 0, LCD_H / 2 - 1 do
-      local directionX = (x - LCD_W / 4) * fovx
-      local directionY = (LCD_H / 4 - y) * fovy
-      local directionZ = 10
+      local baseDirectionX = (x - LCD_W / 4) * fovx
+      local baseDirectionY = (LCD_H / 4 - y) * fovy
+      local baseDirectionZ = 10
 
-      local val = trace(camera.X, camera.Y, camera.Z, directionX, directionY, directionZ)
+      local direction = rotateX(baseDirectionX, baseDirectionY, baseDirectionZ, rotX)
+      direction = rotateY(direction.X, direction.Y, direction.Z, rotY)
+      direction = rotateZ(direction.X, direction.Y, direction.Z, rotZ)
+
+      local val = trace(camera.X, camera.Y, camera.Z, direction.X, direction.Y, direction.Z)
 
       drawBig(x, y, clamp(val, 0, 1))
     end

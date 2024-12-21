@@ -3,11 +3,11 @@ local inputs = { throttle = 0, yaw = 0, pitch = 0, roll = 0 }
 local camera = { X = 0, Y = 10, Z = 0, RX = 0, RY = 0, RZ = 0 }
 
 local objs = {
-  { X = 0, Y = -101, Z = 0, R = 100},
+  { X = 0, Y = -10001, Z = 0, R = 10000},
   { X = 0, Y = 10, Z = 20, R = 5}
 }
 
-local lights = { { X = 0, Y = 10, Z = 10, P = 100000000000} }
+local lights = { { X = 0, Y = 10, Z = 10, P = 1000} }
 
 fovx = 0.5
 fovy = 0.5
@@ -16,10 +16,10 @@ local function init()
 end
 
 local function drawBig(x, y, v)
-  local points = { {X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0} }
+  local points = { {X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0} }
   local addedpoints = 0
 
-  for i = 1, math.floor(v * 5) do
+  for i = 1, math.floor(v * 10) do
     local point = nil
     local inpoints = true
 
@@ -28,7 +28,7 @@ local function drawBig(x, y, v)
     math.randomseed((x * 56453432 + y * 13264534) % 13532 + 5364532)
     while inpoints and retries > 0 do
       inpoints = false
-      point = { X = x * 2 + math.random(0, 1), Y = y * 2 + math.random(0, 1) }
+      point = { X = x * 3 + math.random(0, 2), Y = y * 3 + math.random(0, 2) }
 
       for i = 1, addedpoints do
         local v = points[i]
@@ -63,7 +63,7 @@ local function intersectsDisc(originX, originY, originZ, directionX, directionY,
   if discriminant < 0 then
     return -1
   else
-    return (-b - math.sqrt(discriminant)) / 2 * a
+    return (-b - math.sqrt(discriminant)) / (2 * a)
   end
 end
 
@@ -166,10 +166,10 @@ local function run(event, touchState)
   local rotY = inputs.yaw
   local rotZ = -inputs.roll
 
-  for x = 0, LCD_W / 2 - 1 do
-    for y = 0, LCD_H / 2 - 1 do
-      local baseDirectionX = (x - LCD_W / 4) * fovx
-      local baseDirectionY = (LCD_H / 4 - y) * fovy
+  for x = 0, LCD_W / 3 - 1 do
+    for y = 0, LCD_H / 3 - 1 do
+      local baseDirectionX = (x - LCD_W / 6) * fovx
+      local baseDirectionY = (LCD_H / 6 - y) * fovy
       local baseDirectionZ = 10
 
       local direction = rotateX(baseDirectionX, baseDirectionY, baseDirectionZ, rotX)

@@ -13,6 +13,7 @@ local function drawBig(x, y, v)
 
     local retries = 100
 
+    math.randomseed((x * 56453432 + y * 13264534) % 13532 + 5364532)
     while inpoints and retries > 0 do
       inpoints = false
       point = { X = x * 2 + math.random(0, 1), Y = y * 2 + math.random(0, 1) }

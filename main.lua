@@ -12,6 +12,12 @@ local lights = { { X = 0, Y = 10, Z = 10, P = 1000} }
 fovx = 0.5
 fovy = 0.5
 
+throttle = 2
+gravity = 1
+pitch = 0.5
+roll = 0.5
+rudder = 0.5
+
 local function init()
 end
 
@@ -162,9 +168,9 @@ local function run(event, touchState)
 
   camera.Y = inputs.throttle * 100
 
-  local rotX = inputs.pitch
-  local rotY = inputs.yaw
-  local rotZ = -inputs.roll
+  camera.RX = math.fmod(camera.RX + inputs.pitch * pitch, 2 * math.pi)
+  camera.RY = math.fmod(camera.RY + inputs.yaw * rudder, 2 * math.pi)
+  camera.RZ = math.fmod(camera.RZ - inputs.roll * roll, 2 * math.pi)
 
   for x = 0, LCD_W / 3 - 1 do
     for y = 0, LCD_H / 3 - 1 do
@@ -172,9 +178,9 @@ local function run(event, touchState)
       local baseDirectionY = (LCD_H / 6 - y) * fovy
       local baseDirectionZ = 10
 
-      local direction = rotateX(baseDirectionX, baseDirectionY, baseDirectionZ, rotX)
-      direction = rotateY(direction.X, direction.Y, direction.Z, rotY)
-      direction = rotateZ(direction.X, direction.Y, direction.Z, rotZ)
+      local direction = rotateX(baseDirectionX, baseDirectionY, baseDirectionZ, camera.RX)
+      direction = rotateY(direction.X, direction.Y, direction.Z, camera.RY)
+      direction = rotateZ(direction.X, direction.Y, direction.Z, camera.RZ)
 
       local val = trace(camera.X, camera.Y, camera.Z, direction.X, direction.Y, direction.Z)
 

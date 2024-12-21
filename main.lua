@@ -1,6 +1,12 @@
 local inputs = { throttle = 0, yaw = 0, pitch = 0, roll = 0 }
 
-local camera = { X = 0, Y = 0, Z = 0, RX = 0, RY = 0, RZ = 0 }
+local camera = { X = 0, Y = 10, Z = 0, RX = 0, RY = 0, RZ = 0 }
+
+local objs = { { X = 0, Y = -101, Z = 0, R = 100} }
+
+fovx = 1
+fovy = 1
+renderdistance = 1000000
 
 local function init()
 end
@@ -39,6 +45,56 @@ local function drawBig(x, y, v)
   end
 end
 
+local function intersectsDisc(originX, originY, originZ, directionX, directionY, directionZ, x, y, z, r)
+  sminoX = originX - x
+  sminoY = originY - y
+  sminoZ = originZ - z
+
+  a = directionX * directionX + directionY * directionY + directionZ * directionZ
+  b = 2 * (directionX * sminoX + directionY * sminoY + directionZ * sminoZ)
+  c = sminoX * sminoX + sminoY * sminoY + sminoZ * sminoZ - r * r
+
+  discriminant = b * b - 4 * a * c
+
+  if discriminant < 0 then
+    return -1
+  else
+    return (-b - math.sqrt(discriminant)) / 2 * a
+  end
+end
+
+local function clamp(val, low, high)
+  if val > high then
+    return high
+  end
+
+  if val < low then
+    return low
+  end
+
+  return val
+end
+
+local function trace(originX, originY, originZ, directionX, directionY, directionZ)
+  foundObj = false
+  lowest = math.huge
+
+  for i = 1, #objs do
+    distance = intersectsDisc(originX, originY, originZ, directionX, directionY, directionZ, objs[i].X, objs[i].Y, objs[i].Z, objs[i].R)
+
+    if distance < lowest and distance > 0 then
+      lowest = distance
+      foundObj = true
+    end
+  end
+
+  if foundObj then
+    return lowest
+  end
+
+  return -1
+end
+
 local function run(event, touchState)
   inputs.throttle = (tonumber(getValue('thr')) + 1024) / 2048
   inputs.yaw = tonumber(getValue('rud')) / 1024
@@ -52,9 +108,22 @@ local function run(event, touchState)
     end
   end
 
+  camera.Y = inputs.throttle * 100
+
   for x = 0, LCD_W / 2 - 1 do
     for y = 0, LCD_H / 2 - 1 do
-      drawBig(x, y, x / LCD_W * 2)
+      directionX = (x - LCD_W / 4) * fovx
+      directionY = (LCD_H / 4 - y) * fovy
+      directionZ = 10
+
+      val = trace(camera.X, camera.Y, camera.Z, directionX, directionY, directionZ)
+      if val == -1 then
+        val = 0
+      else
+        val = 1 - val / renderdistance
+      end
+
+      drawBig(x, y, clamp(val, 0, 1))
     end
   end
 

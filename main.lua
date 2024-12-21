@@ -4,9 +4,10 @@ local camera = { X = 0, Y = 10, Z = 0, RX = 0, RY = 0, RZ = 0 }
 
 local objs = { { X = 0, Y = -101, Z = 0, R = 100} }
 
-fovx = 1
-fovy = 1
-renderdistance = 1000000
+local lights = { { X = 0, Y = 10, Z = 10, P = 100000000000} }
+
+fovx = 0.5
+fovy = 0.5
 
 local function init()
 end
@@ -46,15 +47,15 @@ local function drawBig(x, y, v)
 end
 
 local function intersectsDisc(originX, originY, originZ, directionX, directionY, directionZ, x, y, z, r)
-  sminoX = originX - x
-  sminoY = originY - y
-  sminoZ = originZ - z
+  local sminoX = originX - x
+  local sminoY = originY - y
+  local sminoZ = originZ - z
 
-  a = directionX * directionX + directionY * directionY + directionZ * directionZ
-  b = 2 * (directionX * sminoX + directionY * sminoY + directionZ * sminoZ)
-  c = sminoX * sminoX + sminoY * sminoY + sminoZ * sminoZ - r * r
+  local a = directionX * directionX + directionY * directionY + directionZ * directionZ
+  local b = 2 * (directionX * sminoX + directionY * sminoY + directionZ * sminoZ)
+  local c = sminoX * sminoX + sminoY * sminoY + sminoZ * sminoZ - r * r
 
-  discriminant = b * b - 4 * a * c
+  local discriminant = b * b - 4 * a * c
 
   if discriminant < 0 then
     return -1
@@ -76,11 +77,11 @@ local function clamp(val, low, high)
 end
 
 local function trace(originX, originY, originZ, directionX, directionY, directionZ)
-  foundObj = false
-  lowest = math.huge
+  local foundObj = false
+  local lowest = math.huge
 
   for i = 1, #objs do
-    distance = intersectsDisc(originX, originY, originZ, directionX, directionY, directionZ, objs[i].X, objs[i].Y, objs[i].Z, objs[i].R)
+    local distance = intersectsDisc(originX, originY, originZ, directionX, directionY, directionZ, objs[i].X, objs[i].Y, objs[i].Z, objs[i].R)
 
     if distance < lowest and distance > 0 then
       lowest = distance
@@ -89,10 +90,25 @@ local function trace(originX, originY, originZ, directionX, directionY, directio
   end
 
   if foundObj then
-    return lowest
+    local posX = originX + directionX * lowest
+    local posY = originY + directionY * lowest
+    local posZ = originZ + directionZ * lowest
+
+    local illumination = 0
+
+    for i = 1, #lights do
+      local dispX = (posX - lights[i].X)
+      local dispY = (posY - lights[i].Y)
+      local dispZ = (posZ - lights[i].Z)
+      local distance = math.sqrt(dispX * dispX + dispY * dispY + dispZ * dispZ)
+
+      illumination = illumination + lights[i].P / (distance * distance)
+    end
+
+    return illumination
   end
 
-  return -1
+  return 0
 end
 
 local function run(event, touchState)
@@ -112,16 +128,11 @@ local function run(event, touchState)
 
   for x = 0, LCD_W / 2 - 1 do
     for y = 0, LCD_H / 2 - 1 do
-      directionX = (x - LCD_W / 4) * fovx
-      directionY = (LCD_H / 4 - y) * fovy
-      directionZ = 10
+      local directionX = (x - LCD_W / 4) * fovx
+      local directionY = (LCD_H / 4 - y) * fovy
+      local directionZ = 10
 
-      val = trace(camera.X, camera.Y, camera.Z, directionX, directionY, directionZ)
-      if val == -1 then
-        val = 0
-      else
-        val = 1 - val / renderdistance
-      end
+      local val = trace(camera.X, camera.Y, camera.Z, directionX, directionY, directionZ)
 
       drawBig(x, y, clamp(val, 0, 1))
     end

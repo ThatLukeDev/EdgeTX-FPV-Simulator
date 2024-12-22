@@ -27,42 +27,12 @@ drag = 0.001
 local function init()
 end
 
-local function rnd(val)
-  seed = math.fmod((seed * 13264534 + 5364532), 13532)
-  return math.fmod(seed, val)
-end
-
 local function drawBig(x, y, v)
-  local points = { {X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0},{X=0,Y=0} }
-  local addedpoints = 0
+  x = x * 4
+  y = y * 4
 
-  for i = 1, math.floor(v * 10) do
-    local point = nil
-    local inpoints = true
-
-    local retries = 100
-
-    seed = math.fmod((x * 56453432 + y * 13264534 + 5364532), 13532)
-    while inpoints and retries > 0 do
-      inpoints = false
-      point = { X = x * 3 + rnd(3), Y = y * 3 + rnd(3) }
-
-      for i = 1, addedpoints do
-        local v = points[i]
-        if v.X == point.X and v.Y == point.Y then
-          inpoints = true
-        end
-      end
-
-      if not inpoints then
-        lcd.drawPoint(point.X, point.Y)
-        addedpoints = addedpoints + 1
-        points[addedpoints].X = point.X
-        points[addedpoints].Y = point.Y
-      end
-
-      retries = retries - 1
-    end
+  for i = 0, v * 16 - 1 do
+    lcd.drawPoint(x + math.fmod(i, 4), y + i / 4)
   end
 end
 
@@ -206,10 +176,10 @@ local function run(event, touchState)
   velocity.Y = velocity.Y - velocity.Y * dragVal * drag
   velocity.Z = velocity.Z - velocity.Z * dragVal * drag
 
-  for x = 0, LCD_W / 3 - 1 do
-    for y = 0, LCD_H / 3 - 1 do
-      direction.X = (x - LCD_W / 6) * fovx
-      direction.Y = (LCD_H / 6 - y) * fovy
+  for x = 0, LCD_W / 4 - 1 do
+    for y = 0, LCD_H / 4 - 1 do
+      direction.X = (x - LCD_W / 8) * fovx
+      direction.Y = (LCD_H / 8 - y) * fovy
       direction.Z = 10
 
       direction = rotateX(direction.X, direction.Y, direction.Z, camera.RX)
